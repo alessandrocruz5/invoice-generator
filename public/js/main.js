@@ -1,6 +1,8 @@
 // Boot, state ownership and event wiring. The sheet is rendered by editor.js; all math lives in calc.js.
 import {
   createDefaultDocument,
+  pickDefaults,
+  migrate,
   labelFor,
   setLabel,
   newItem,
@@ -23,6 +25,8 @@ import { formatTin } from './tin.js';
 import { todayIso, addDays, parseNetTerms, formatDate } from './dates.js';
 import { pdfMoneyFormatter, pdfFilename, buildDocDefinition, downloadPdf } from './pdf.js';
 import { validate } from './validate.js';
+import { getLocalStorage, createStore } from './storage.js';
+import { STORAGE_BANNER, DATA_LOCATION_NOTE } from './copy.js';
 import { renderSheet, updateComputed, renderSidebar, setPath, autoGrow, idFor } from './editor.js';
 
 const app = {
@@ -34,7 +38,10 @@ const app = {
   issues: { errors: [], warnings: [] },
   touched: new Set(),
   showAll: false,
+  store: null,
 };
+
+const SAVE_DELAY_MS = 500;
 
 const MAX_DECIMALS = { qty: 4, rate: 4, percent: 3, money: 4 };
 const IMAGE_TARGETS = new Set(['logo', 'payment_qr']);
@@ -48,9 +55,71 @@ let autoDue = '';
 // now point at a different row (after a splice); the `input` events already applied that value.
 let rendering = false;
 
-// Prompt 16 restores the saved draft (and defaults) here.
+let saveTimer = null;
+let bannerShown = false;
+
+function showStorageBanner() {
+  if (bannerShown) return;
+  bannerShown = true;
+  const banner = document.getElementById('storage-banner');
+  banner.textContent = STORAGE_BANNER;
+  banner.hidden = false;
+}
+
+function newDocument({ useDefaults = true, currency = null } = {}) {
+  const doc = createDefaultDocument({
+    today: todayIso(),
+    language: navigator.language,
+    defaults: useDefaults ? app.store.readDefaults().value ?? null : null,
+    lastNumber: useDefaults ? app.store.readLastNumber().value ?? '' : '',
+  });
+  // Spec §4: the default currency is the last one used, unless saved defaults say otherwise.
+  if (currency !== null && !hasSavedCurrency()) doc.currency = currency;
+  return doc;
+}
+
+function hasSavedCurrency() {
+  const saved = app.store.readDefaults().value;
+  return saved !== null && typeof saved === 'object' && Object.hasOwn(saved, 'currency');
+}
+
+// Restores the saved draft, else starts from the saved defaults.
 function loadInitialDoc() {
-  return createDefaultDocument({ today: todayIso(), language: navigator.language });
+  app.store = createStore(getLocalStorage());
+  if (!app.store.available) showStorageBanner();
+  const draft = app.store.readDraft();
+  if (draft.ok && draft.value !== null) {
+    try {
+      return migrate(draft.value);
+    } catch {
+      // an unreadable draft falls back to a fresh document
+    }
+  }
+  return newDocument();
+}
+
+function saveDraft() {
+  saveTimer = null;
+  if (!app.store.writeDraft(app.doc).ok) showStorageBanner();
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveDraft, SAVE_DELAY_MS);
+}
+
+function flushSave() {
+  if (saveTimer !== null) {
+    clearTimeout(saveTimer);
+    saveDraft();
+  }
+}
+
+function resetDocState() {
+  app.invalid.clear();
+  app.touched.clear();
+  app.showAll = false;
+  autoDue = '';
 }
 
 function safeLocale(locale) {
@@ -124,6 +193,7 @@ function refresh({ structural = false, focusId = null } = {}) {
   renderSidebar(sidebar, app.doc, app.view);
   app.issues = validate(app.doc, { totals: app.view.totals, invalid: app.invalid, historyNumbers: app.historyNumbers });
   renderMessages();
+  scheduleSave();
 }
 
 // ---- validation messages -----------------------------------------------------------------------------
@@ -492,10 +562,67 @@ async function onDownload() {
   }
 }
 
+// ---- saving, new document, clear ---------------------------------------------------------------------
+
+function setDefaultStatus(text) {
+  document.getElementById('default-status').textContent = text;
+}
+
+function onSaveDefault() {
+  const ok = app.store.writeDefaults(pickDefaults(app.doc)).ok;
+  if (!ok) showStorageBanner();
+  setDefaultStatus(ok ? 'Saved as default.' : 'Could not save the default.');
+}
+
+function onNewDocument() {
+  if (!confirm('Start a new document? Unsaved changes to this one are kept only if you exported or downloaded it.')) return;
+  app.doc = newDocument({ currency: app.doc.currency });
+  resetDocState();
+  setDefaultStatus('');
+  refresh({ structural: true });
+}
+
+function onClearAll() {
+  if (!confirm("Delete every saved draft, default and history entry in this browser? This can't be undone.")) return;
+  if (!app.store.clearAll().ok) showStorageBanner();
+  app.doc = newDocument({ useDefaults: false });
+  app.historyNumbers = [];
+  resetDocState();
+  setDefaultStatus('');
+  refresh({ structural: true });
+  // The blank document stays unsaved until the next edit, so the cleared keys stay empty.
+  clearTimeout(saveTimer);
+  saveTimer = null;
+}
+
+function actionButton(text, id, onClick) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.id = id;
+  button.textContent = text;
+  button.addEventListener('click', onClick);
+  return button;
+}
+
+function buildPersistenceControls() {
+  const status = document.createElement('p');
+  status.id = 'default-status';
+  status.className = 'help';
+  status.setAttribute('role', 'status');
+  document.getElementById('sidebar-actions').append(actionButton('Save as default', 'save-default', onSaveDefault), status);
+  document.getElementById('topbar-actions').append(actionButton('New document', 'new-document', onNewDocument));
+  const clear = actionButton('Clear all data', 'clear-all', onClearAll);
+  // app.css is outside this prompt's files, so the link look is set here.
+  Object.assign(clear.style, { background: 'none', border: '0', padding: '0', color: 'inherit', textDecoration: 'underline', cursor: 'pointer' });
+  document.getElementById('app-footer').append(clear);
+  document.getElementById('data-note').textContent = DATA_LOCATION_NOTE;
+}
+
 function boot() {
   form = document.getElementById('sheet');
   sidebar = document.getElementById('sidebar');
   app.doc = loadInitialDoc();
+  buildPersistenceControls();
 
   // The CSP has form-action 'none': an implicit Enter-key submit would attempt a blocked navigation.
   form.addEventListener('submit', (e) => e.preventDefault());
@@ -507,6 +634,7 @@ function boot() {
   document.getElementById('messages').addEventListener('click', onMessageLink);
   sidebar.addEventListener('change', onSetting);
   document.getElementById('download').addEventListener('click', onDownload);
+  window.addEventListener('pagehide', flushSave);
   window.addEventListener('resize', () => {
     for (const el of form.querySelectorAll('textarea')) autoGrow(el);
   });
