@@ -192,7 +192,7 @@ test('items keep their original index: a blank row before a priced one', () => {
   const body = itemsTable(def).table.body;
   assert.equal(body.length, 2); // header + one item
   assert.equal(body[1][0].text, 'Consulting');
-  assert.ok(body[1][3].text.includes('200.00'));
+  assert.ok(body[1][4].text.includes('200.00'));
 });
 
 test('rate keeps typed decimals up to 4, amount keeps the currency places', () => {
@@ -200,8 +200,29 @@ test('rate keeps typed decimals up to 4, amount keeps the currency places', () =
     d.items = [item('Widget', '3', '0.3333')];
   });
   const row = itemsTable(def).table.body[1];
-  assert.ok(row[2].text.includes('0.3333'));
-  assert.ok(row[3].text.includes('1.00'));
+  assert.ok(row[3].text.includes('0.3333'));
+  assert.ok(row[4].text.includes('1.00'));
+});
+
+test('items table reads Item, Qty / Hrs, Unit, Rate, Amount', () => {
+  const { def } = build();
+  assert.deepEqual(itemsTable(def).table.body[0].map((c) => c.text), ['Item', 'Qty / Hrs', 'Unit', 'Rate', 'Amount']);
+});
+
+test('the unit prints in its own column and does not change the amount', () => {
+  const amountFor = (unit) => {
+    const { def } = build((d) => {
+      d.items = [{ ...item('Manual Functional Testing', '160', '500'), unit }];
+    });
+    const row = itemsTable(def).table.body[1];
+    return [row[2].text, row[4].text];
+  };
+  const [hoursUnit, hoursAmount] = amountFor('hours');
+  const [qtyUnit, qtyAmount] = amountFor('qty');
+  assert.equal(hoursUnit, 'Hours');
+  assert.equal(qtyUnit, 'Qty');
+  assert.ok(hoursAmount.includes('80,000.00'));
+  assert.equal(hoursAmount, qtyAmount);
 });
 
 test('description prints under the name', () => {
