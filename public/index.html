@@ -8,6 +8,7 @@
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
+  <div id="storage-banner" class="messages-warnings" role="status" hidden></div>
   <header class="topbar">
     <h1>Billing Statement Generator</h1>
     <nav id="topbar-actions" aria-label="Document actions"></nav>
@@ -57,10 +58,39 @@
 
       <div id="sidebar-actions"></div>
 
-      <p id="data-note" class="help">Your data lives only in this browser.</p>
+      <p id="data-note" class="help"></p>
     </aside>
   </main>
 
   <footer id="app-footer"></footer>
+
+  <input type="file" id="import-file" class="visually-hidden" accept=".json,application/json" tabindex="-1" aria-hidden="true">
+
+  <dialog id="history-dialog" aria-labelledby="history-title">
+    <h2 id="history-title">History</h2>
+    <p class="help">History keeps up to 50 documents without logo or QR images. Opening one uses your current default images.</p>
+    <p id="history-status" class="history-status" role="status"></p>
+    <p id="history-empty" class="help" hidden>No downloads yet.</p>
+    <div id="history-list" class="history-scroll">
+      <table aria-labelledby="history-title">
+        <thead>
+          <tr>
+            <th scope="col">Number</th>
+            <th scope="col">BIR Invoice No.</th>
+            <th scope="col">Bill To</th>
+            <th scope="col">Date</th>
+            <th scope="col">Balance due</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="history-rows"></tbody>
+      </table>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" id="history-csv">Export history as CSV</button>
+      <button type="button" id="history-clear">Clear history</button>
+      <button type="button" id="history-close">Close</button>
+    </div>
+  </dialog>
 </body>
 </html>
