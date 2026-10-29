@@ -3,7 +3,7 @@ type: prompt
 plan: "[[2026-10-29-item-units]]"
 id: 01
 unit: IG-9
-status: todo
+status: done
 model: opus
 effort: high
 depends_on: []

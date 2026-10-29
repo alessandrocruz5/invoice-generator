@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  DOC_VERSION, DEFAULT_LABELS, LABEL_KEYS, DEFAULT_KEYS, MAX_IMAGE_BYTES,
+  DOC_VERSION, DEFAULT_LABELS, LABEL_KEYS, DEFAULT_KEYS, ITEM_UNITS, MAX_IMAGE_BYTES,
   labelFor, setLabel, newItem, isBlankItem, defaultPaper, createDefaultDocument, pickDefaults, migrate,
   checkImageDataUrl, cloneDoc,
 } from '../public/js/state.js';
@@ -150,6 +150,24 @@ test('migrate keeps known values, drops unknown keys, and does not mutate input'
   assert.equal(out.items.length, 1);
   delete doc.items;
   assert.equal(migrate(doc).items.length, 1);
+});
+
+test('item units: default, labels, migrate and blank rows', () => {
+  assert.deepEqual(ITEM_UNITS.map((u) => u.id), ['qty', 'hours']);
+  assert.equal(newItem().unit, 'qty');
+  assert.equal(DEFAULT_LABELS.quantity_header, 'Qty / Hrs');
+  assert.equal(DEFAULT_LABELS.unit_header, 'Unit');
+  assert.equal(isBlankItem({ ...newItem(), unit: 'hours' }), true);
+
+  const doc = fresh();
+  const missing = { ...newItem() };
+  delete missing.unit;
+  doc.items = [{ ...newItem(), unit: 'hours' }, missing, { ...newItem(), unit: 'days' }, 'str'];
+  const before = JSON.stringify(doc);
+  const out = migrate(doc);
+  assert.equal(JSON.stringify(doc), before);
+  assert.deepEqual(out.items.slice(0, 3).map((i) => i.unit), ['hours', 'qty', 'qty']);
+  assert.equal(out.items[3], 'str');
 });
 
 test('cloneDoc is deep', () => {

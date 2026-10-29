@@ -1,7 +1,7 @@
 // localStorage access, history, CSV, export filenames and the import sanitiser. Pure: the storage object is
 // passed in, and `localStorage` is touched only inside getLocalStorage, never at import time.
 import {
-  createDefaultDocument, LABEL_KEYS, MAX_CUSTOM_FIELDS, checkImageDataUrl, cloneDoc, newItem,
+  createDefaultDocument, ITEM_UNITS, LABEL_KEYS, MAX_CUSTOM_FIELDS, checkImageDataUrl, cloneDoc, newItem,
 } from './state.js';
 import { MODES, VAT_TREATMENTS, modeConfig } from './modes.js';
 import { isSupportedCurrency, NUMBER_FORMATS } from './currency.js';
@@ -199,6 +199,7 @@ function importItems(value) {
         description: str(get(raw, 'description'), 1000) ?? '',
         quantity: canonical(get(raw, 'quantity')),
         unit_cost: canonical(get(raw, 'unit_cost')),
+        unit: oneOf(get(raw, 'unit'), ITEM_UNITS.map((u) => u.id)) ? get(raw, 'unit') : 'qty',
       });
     }
   }

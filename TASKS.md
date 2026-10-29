@@ -25,6 +25,6 @@ Epic: — (no epic key given) · Branch base: `develop` · Plan: [[2026-10-29-it
 > **Epic:** Let each line item be billed by quantity or by hours, chosen per item, with the items table matching the
 > sample: Item · Qty / Hrs · Unit · Rate · Amount. The calculation is unchanged (amount = quantity × rate).
 
-- [ ] IG-9 — Item units: Qty or Hours · Added · plan: [[2026-10-29-item-units]] prompts: 01, 02 · depends: — · model: opus
+- [~] IG-9 — Item units: Qty or Hours · Added · plan: [[2026-10-29-item-units]] prompts: 01, 02 · depends: — · model: opus
 
 ## Hotfixes

@@ -19,7 +19,8 @@ export const DEFAULT_LABELS = {
   purchase_order_title: 'PO Number',
   bir_invoice_title: 'BIR Invoice No.',
   item_header: 'Item',
-  quantity_header: 'Quantity',
+  quantity_header: 'Qty / Hrs',
+  unit_header: 'Unit',
   unit_cost_header: 'Rate',
   amount_header: 'Amount',
   subtotal_title: 'Subtotal',
@@ -37,6 +38,7 @@ export const DEFAULT_LABELS = {
   payment_title: 'Payment Details',
 };
 export const LABEL_KEYS = Object.keys(DEFAULT_LABELS);
+export const ITEM_UNITS = [{ id: 'qty', label: 'Qty' }, { id: 'hours', label: 'Hours' }];
 
 // What "Save as default" keeps (SPEC §6). `fields.withholding` is the one nested key.
 export const DEFAULT_KEYS = [
@@ -71,7 +73,7 @@ export function setLabel(doc, key, text) {
 }
 
 export function newItem(makeId = () => globalThis.crypto.randomUUID()) {
-  return { id: makeId(), name: '', description: '', quantity: '1', unit_cost: '0' };
+  return { id: makeId(), name: '', description: '', quantity: '1', unit_cost: '0', unit: 'qty' };
 }
 
 export function isBlankItem(item) {
@@ -164,6 +166,9 @@ export function migrate(obj) {
     else doc[key] = saved[key];
   }
   if (!Array.isArray(doc.items) || doc.items.length === 0) doc.items = [newItem()];
+  for (const item of doc.items) {
+    if (plain(item) && !ITEM_UNITS.some((u) => u.id === item.unit)) item.unit = 'qty';
+  }
   return doc;
 }
 

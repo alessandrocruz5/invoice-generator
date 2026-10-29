@@ -101,17 +101,18 @@ The sheet keeps invoice-generator.com's regions. A **tax mode** select in the si
 | Ship To (Generic only) | Multi-line | No |  |
 | Meta, right column | Date, Payment Terms, Due Date, PO Number, BIR Invoice No. (PH modes) | Date: yes | BIR Invoice No. links this statement to the invoice from the user's booklet |
 | Custom fields | Up to 6 label/value rows | No | Generic presets: Tax ID, VAT No., ABN, Supply date, Service period |
-| Items | Item, Quantity, Rate, Amount; optional description under the name | At least one named item |  |
+| Items | Item, Qty / Hrs, Unit (Qty or Hours), Rate, Amount; optional description under the name | At least one named item |  |
 | Notes and Terms | Two multi-line blocks | No | When withholding is on, a toggle adds "Kindly issue BIR Form 2307 for the tax withheld." |
 | Payment details | Multi-line text (bank, account name and number, GCash or Maya number) and an optional QR image | No | The user uploads the QR image from their own GCash, Maya or bank app, labelled "Scan to pay (InstaPay QR)". PNG or JPEG, 500 KB max. The tool never generates, edits or adds an amount to a QR code |
 | Totals | Section 5 |  |  |
 | Footer (PH modes) | "This is a billing statement, not a BIR invoice or official receipt." |  | On by default and can be switched off. Optional second line: "THIS DOCUMENT IS NOT VALID FOR CLAIM OF INPUT TAX" |
 
-**Item fields:** name (required, up to 200 characters); description (optional, multi-line, up to 1,000); quantity (above 0, up to 4 decimals, default 1); rate (0 or more, up to 4 decimals, excluding VAT); amount (computed, read-only).
+**Item fields:** name (required, up to 200 characters); description (optional, multi-line, up to 1,000); quantity (above 0, up to 4 decimals, default 1); rate (0 or more, up to 4 decimals, excluding VAT); unit (Qty or Hours, default Qty; display only, never used in the calculation); amount (computed, read-only).
 
 **Editable labels.** Every label is an input with default text. The keys follow invoice-generator.com's API (`header`, `to_title`, `date_title`, `payment_terms_title`, `due_date_title`, `purchase_order_title`, `item_header`, `quantity_header`, `unit_cost_header`, `amount_header`, `subtotal_title`, `discounts_title`, `tax_title`, `shipping_title`, `total_title`, `amount_paid_title`, `balance_title`, `notes_title`, `terms_title`). Added keys:
 
 - `client_tin_title` (TIN), `bir_invoice_title` (BIR Invoice No.), `payment_title` (Payment Details)
+- `unit_header` (Unit). `quantity_header` defaults to "Qty / Hrs".
 - `vat_title` (VAT 12%), `withholding_title` (Less: Withholding Tax), `net_payable_title` (Net Amount Payable)
 
 The seller TIN prefix is not editable, because it must match the mode. Keep "Less: Withholding Tax" as the default: \[Certain\] since RR 6-2026 (effective 16 Oct 2026) invoices must show creditable withholding as a separate item with that wording ([Grant Thornton](https://www.grantthornton.com.ph/insights/articles-and-updates1/lets-talk-tax/a-new-bir-invoice-requirement-for-business-compliance/)), so the layout carries over to any future official mode.
@@ -136,7 +137,7 @@ The seller TIN prefix is not editable, because it must match the mode. Keep "Les
   "bir_invoice_no": "",
   "custom_fields": [],
   "items": [
-    { "id": "b3f1…", "name": "", "description": "", "quantity": "1", "unit_cost": "0" }
+    { "id": "b3f1…", "name": "", "description": "", "quantity": "1", "unit_cost": "0", "unit": "qty" }
   ],
   "fields": { "discounts": false, "tax": "%", "shipping": false, "withholding": false },
   "discounts": "",
@@ -338,7 +339,7 @@ Desktop (>= 900 px)
 | | [Who is this to?     ]  Due Date      [    ]   | | [ Save as default ]    |
 | | TIN [               ]   PO Number     [    ]   | | Export   Import        |
 | |                         BIR Invoice No. [  ]   | |                        |
-| | Item                 Quantity  Rate   Amount   | | Your data lives only   |
+| | Item          Qty/Hrs  Unit  Rate  Amount      | | Your data lives only   |
 | | [Description ...   ] [1     ] [0.00] P0.00 x   | | in this browser.       |
 | | + Line item                                    | |                        |
 | | Notes [          ]   Subtotal          P0.00   | | (errors and warnings   |
@@ -627,3 +628,4 @@ These refine the sections above. Where they differ, this section wins.
 - **Browser floor.** Chrome/Edge 99+, **Firefox 98+** (native `<dialog>`, which section 6 requires; this also covers `structuredClone` and `crypto.randomUUID`), Safari 15.4+.
 - **Not-saving banner.** It appears only when storage actually fails. Current browsers give private windows working (temporary) storage, so the section 10 check is done with site data blocked for the origin.
 - **Previews.** The Vercel project's production branch is `main`. Preview checks need Deployment Protection turned off for previews, or a Protection Bypass for Automation secret sent as the `x-vercel-protection-bypass` header.
+- **Item units (2026-10-29).** Each item has `unit`, `'qty'` or `'hours'` (default `'qty'`), shown in a Unit column after Qty / Hrs on the sheet and in the PDF. It's display only: `calc.js`, validation and the history CSV ignore it. `migrate` and `sanitizeImport` set a missing or unknown unit to `'qty'`, so `DOC_VERSION` stays 1. The `quantity_header` default is now "Qty / Hrs", so every saved document that uses the default label shows the new text; a renamed label is kept.
