@@ -1,0 +1,22 @@
+# Invoice Generator — Sprints
+Status: [ ] planned · [~] in progress · [x] merged · [-] cancelled (excluded from changelog)
+
+> Each unit's plan, prompts and acceptance criteria are in its `plan:` link. `/build-unit {KEY-id}` runs them.
+
+## Sprint 1 — Invoice Generator v1   (planned 2026-10-29)
+Epic: — (no epic ticket) · Branch base: `develop` · Plan: [[2026-10-29-invoice-v1]]
+
+> **Epic:** A free, in-browser billing statement generator for Filipino freelancers that gets withholding tax right,
+> with a Generic invoice mode. Static HTML/JS on Vercel with vendored pdfmake 0.3.11; nothing leaves the browser.
+> Release is one `develop → main` merge after the `docs/SPEC.md` §10 checklist passes.
+
+- [~] IG-1 — Scaffold, guardrails and vendored pdfmake · Added · plan: [[2026-10-29-invoice-v1]] prompts: 01, 02, 03 · depends: — · model: sonnet
+- [ ] IG-2 — Money core: calc, withholding, modes · Added · plan: [[2026-10-29-invoice-v1]] prompts: 04, 05 · depends: IG-1 · model: opus
+- [ ] IG-3 — Input helpers: TIN, dates, numbering, currency, glyphs · Added · plan: [[2026-10-29-invoice-v1]] prompts: 06, 07 · depends: IG-1 · model: sonnet
+- [ ] IG-4 — Editable sheet · Added · plan: [[2026-10-29-invoice-v1]] prompts: 08, 09, 10 · depends: IG-2, IG-3 · model: opus
+- [ ] IG-5 — PDF download · Added · plan: [[2026-10-29-invoice-v1]] prompts: 11, 12 · depends: IG-4 · model: sonnet
+- [ ] IG-6 — Validation · Added · plan: [[2026-10-29-invoice-v1]] prompts: 13, 14 · depends: IG-5 · model: sonnet
+- [ ] IG-7 — Saving, history, import and export · Added · plan: [[2026-10-29-invoice-v1]] prompts: 15, 16, 17 · depends: IG-6 · model: opus
+- [ ] IG-8 — Public pages and launch readiness · Added · plan: [[2026-10-29-invoice-v1]] prompts: 18, 19 · depends: IG-7 · model: sonnet
+
+## Hotfixes

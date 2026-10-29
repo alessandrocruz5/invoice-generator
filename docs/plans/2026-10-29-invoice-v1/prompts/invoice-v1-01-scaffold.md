@@ -2,8 +2,8 @@
 type: prompt
 plan: "[[2026-10-29-invoice-v1]]"
 id: 01
-unit: U1
-status: todo
+unit: IG-1
+status: done
 model: sonnet
 effort: low
 depends_on: []
@@ -21,7 +21,7 @@ Create the static-site scaffold and the repo profile, and move the spec to `docs
 ## Context
 Repo root: `/home/apa/Code/portfolio/invoice-generator`. The repo holds only `README.md` and the spec. There is no code yet.
 
-1. **Move the spec:** `mv "docs/Invoice Generator — Build Spec.md" docs/SPEC.md`. The file is untracked, so a plain `mv` is enough. Then append this section at the end of `docs/SPEC.md`, exactly:
+1. **Move the spec:** `git mv "docs/Invoice Generator — Build Spec.md" docs/SPEC.md` (the file is tracked on `develop`). Then append this section at the end of `docs/SPEC.md`, exactly:
 
 ```markdown
 

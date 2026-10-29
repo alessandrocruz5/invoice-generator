@@ -2,8 +2,8 @@
 type: prompt
 plan: "[[2026-10-29-invoice-v1]]"
 id: 03
-unit: U1
-status: todo
+unit: IG-1
+status: done
 model: haiku
 effort: low
 depends_on: [01]
