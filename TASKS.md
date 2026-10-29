@@ -10,8 +10,8 @@ Epic: — (no epic ticket) · Branch base: `develop` · Plan: [[2026-10-29-invoi
 > with a Generic invoice mode. Static HTML/JS on Vercel with vendored pdfmake 0.3.11; nothing leaves the browser.
 > Release is one `develop → main` merge after the `docs/SPEC.md` §10 checklist passes.
 
-- [~] IG-1 — Scaffold, guardrails and vendored pdfmake · Added · plan: [[2026-10-29-invoice-v1]] prompts: 01, 02, 03 · depends: — · model: sonnet
-- [ ] IG-2 — Money core: calc, withholding, modes · Added · plan: [[2026-10-29-invoice-v1]] prompts: 04, 05 · depends: IG-1 · model: opus
+- [x] IG-1 — Scaffold, guardrails and vendored pdfmake · Added · plan: [[2026-10-29-invoice-v1]] prompts: 01, 02, 03 · depends: — · model: sonnet (merged 2026-10-29) — scaffold, CLAUDE.md profile, guard tests, pdfmake 0.3.11 vendored. Downstream: no CI on the repo; Vercel not yet connected (F11 open).
+- [~] IG-2 — Money core: calc, withholding, modes · Added · plan: [[2026-10-29-invoice-v1]] prompts: 04, 05 · depends: IG-1 · model: opus
 - [ ] IG-3 — Input helpers: TIN, dates, numbering, currency, glyphs · Added · plan: [[2026-10-29-invoice-v1]] prompts: 06, 07 · depends: IG-1 · model: sonnet
 - [ ] IG-4 — Editable sheet · Added · plan: [[2026-10-29-invoice-v1]] prompts: 08, 09, 10 · depends: IG-2, IG-3 · model: opus
 - [ ] IG-5 — PDF download · Added · plan: [[2026-10-29-invoice-v1]] prompts: 11, 12 · depends: IG-4 · model: sonnet
