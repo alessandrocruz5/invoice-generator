@@ -3,7 +3,7 @@ Status: [ ] planned · [~] in progress · [x] merged · [-] cancelled (excluded 
 
 > Each unit's plan, prompts and acceptance criteria are in its `plan:` link. `/build-unit {KEY-id}` runs them.
 
-## Sprint 1 — Invoice Generator v1   (planned 2026-10-29)
+## Sprint 1 — Invoice Generator v1 · v0.1.0   (planned 2026-10-29, shipped 2026-10-29)
 Epic: — (no epic ticket) · Branch base: `develop` · Plan: [[2026-10-29-invoice-v1]]
 
 > **Epic:** A free, in-browser billing statement generator for Filipino freelancers that gets withholding tax right,
@@ -17,6 +17,6 @@ Epic: — (no epic ticket) · Branch base: `develop` · Plan: [[2026-10-29-invoi
 - [x] IG-5 — PDF download · Added · plan: [[2026-10-29-invoice-v1]] prompts: 11, 12 · depends: IG-4 · model: sonnet (merged 2026-10-29) — pdf.js (definition, lazy pdfmake loader, `downloadPdf`) and the Download button; 109 tests. Downstream: prompt 14 inserts validation at `// validation gate (prompt 14)` in `main.js` `onDownload`; prompt 17 records History at `// after download (prompt 17)`; `pdf-glyphs.js` `isPdfSafeChar` lacks U+2212 '−' (a user-typed '−' would be falsely flagged by prompt 13's Rule 3); `main.js` passes `images: { logo, qr }` natural sizes (null → fit).
 - [x] IG-6 — Validation · Added · plan: [[2026-10-29-invoice-v1]] prompts: 13, 14 · depends: IG-5 · model: sonnet (merged 2026-10-29) — validate.js (all §7 rules, 30 tests) and the validation UI in main.js; 139 tests. Downstream: prompt 16/17 must keep `app.historyNumbers` (array of saved numbers) current, since `validate` reads only that; `refresh()` re-validates on every call and `renderMessages()` re-marks `aria-invalid` after each sheet rebuild; `#messages` holds `#validation` and `#download-error`; `// after download (prompt 17)` marker still in `onDownload`; `app.touched`/`app.showAll` should reset on new document/import (prompt 16/17); `pdf-glyphs.js` still lacks U+2212 (validate.js filters it).
 - [x] IG-7 — Saving, history, import and export · Added · plan: [[2026-10-29-invoice-v1]] prompts: 15, 16, 17 · depends: IG-6 · model: opus (merged 2026-10-29) — storage.js, autosave, History, import/export; 163 tests.
-- [~] IG-8 — Public pages and launch readiness · Added · plan: [[2026-10-29-invoice-v1]] prompts: 18, 19 · depends: IG-7 · model: sonnet
+- [x] IG-8 — Public pages and launch readiness · Added · plan: [[2026-10-29-invoice-v1]] prompts: 18, 19 · depends: IG-7 · model: sonnet (merged 2026-10-29) — privacy (EN + fil), terms and support pages, footer and disclaimer, meta/OG tags, favicon, a11y pass; 163 tests. Downstream: support.html shows `gcash-qr.jpg` and `maya-qr.jpg` (not `donate-qr.png`); Lighthouse, Safari/Firefox and the security headers are still unchecked (SPEC §10 on the preview).
 
 ## Hotfixes
