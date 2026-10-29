@@ -1,7 +1,7 @@
 ---
 type: plan
 kind: feature
-status: audited
+status: in-progress
 repo: invoice-generator
 delivery: pr
 base: develop
@@ -138,3 +138,5 @@ Revert the IG-9 merge commit on `develop`. Documents saved in the meantime keep 
 ## Log
 - 2026-10-29: planned
 - 2026-10-29: audited (PASS-WITH-CHANGES), 4 fixes and 3 notes applied
+- 2026-10-29: build started on IG-9; rollback point 637bd8f3c5200c7ec5a436731fff9e2dd318fa00
+- 2026-10-29: 01 done (opus, 0 retries): item `unit` in state/migrate/import, `ITEM_UNITS`, `unit_header`, `quantity_header` → "Qty / Hrs", SPEC §3/§8/§11; 164 tests pass in 3 TZs

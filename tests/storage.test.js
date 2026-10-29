@@ -49,8 +49,8 @@ function fullDocument() {
     bir_invoice_no: '0001234',
     custom_fields: [{ label: 'Service period', value: 'October 2026' }],
     items: [
-      { id: 'a1b2c3', name: 'Design', description: 'Logo, 3 rounds', quantity: '3', unit_cost: '3333.33' },
-      { id: newItem().id, name: 'Hosting', description: '', quantity: '1.5', unit_cost: '0.0001' },
+      { id: 'a1b2c3', name: 'Design', description: 'Logo, 3 rounds', quantity: '3', unit_cost: '3333.33', unit: 'hours' },
+      { id: newItem().id, name: 'Hosting', description: '', quantity: '1.5', unit_cost: '0.0001', unit: 'qty' },
     ],
     fields: { discounts: '%', tax: true, shipping: true, withholding: true },
     discounts: '10',
@@ -265,6 +265,7 @@ test('exportFilename and csvFilename', () => {
 test('import: a full valid document round-trips unchanged', () => {
   const doc = fullDocument();
   assert.deepEqual(sanitizeImport(JSON.stringify(doc)), doc);
+  assert.equal(sanitizeImport(JSON.stringify(doc)).items[0].unit, 'hours');
   const generic = { ...fresh(), mode: 'generic', number: '7', fields: { discounts: false, tax: '%', shipping: false, withholding: false } };
   assert.deepEqual(imp(generic), generic);
 });
@@ -376,11 +377,15 @@ test('import: items are capped, ids checked, and an empty list gets one blank it
   assert.match(odd.items[0].id, /^[0-9a-f-]{36}$/);
   assert.equal(odd.items[0].name.length, 200);
   assert.equal(odd.items[0].description.length, 1000);
+  assert.equal(odd.items[0].unit, 'qty');
+
+  const units = imp({ version: 1, items: ['days', 5, '__proto__'].map((unit) => ({ name: 'x', unit })) });
+  assert.deepEqual(units.items.map((i) => i.unit), ['qty', 'qty', 'qty']);
 
   for (const items of [[], 'nope', undefined]) {
     const blank = imp({ version: 1, items });
     assert.equal(blank.items.length, 1);
-    assert.deepEqual({ ...blank.items[0], id: '' }, { id: '', name: '', description: '', quantity: '1', unit_cost: '0' });
+    assert.deepEqual({ ...blank.items[0], id: '' }, { id: '', name: '', description: '', quantity: '1', unit_cost: '0', unit: 'qty' });
   }
 });
 
