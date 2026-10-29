@@ -11,7 +11,7 @@ Epic: — (no epic ticket) · Branch base: `develop` · Plan: [[2026-10-29-invoi
 > Release is one `develop → main` merge after the `docs/SPEC.md` §10 checklist passes.
 
 - [x] IG-1 — Scaffold, guardrails and vendored pdfmake · Added · plan: [[2026-10-29-invoice-v1]] prompts: 01, 02, 03 · depends: — · model: sonnet (merged 2026-10-29) — scaffold, CLAUDE.md profile, guard tests, pdfmake 0.3.11 vendored. Downstream: no CI on the repo; Vercel not yet connected (F11 open).
-- [~] IG-2 — Money core: calc, withholding, modes · Added · plan: [[2026-10-29-invoice-v1]] prompts: 04, 05 · depends: IG-1 · model: opus
+- [x] IG-2 — Money core: calc, withholding, modes · Added · plan: [[2026-10-29-invoice-v1]] prompts: 04, 05 · depends: IG-1 · model: opus (merged 2026-10-29) — calc.js (BigInt, P1–P4/V1–V6), withholding.js, modes.js; 42 tests. Downstream: prompt 08 `state.migrate` must default `vat_treatment` to 'vatable' (`totalsRows` labels any other value 'VAT 12%'); prompt 13 must reject empty rates (rows render '()%') and cap input length (calc.js has no length cap).
 - [ ] IG-3 — Input helpers: TIN, dates, numbering, currency, glyphs · Added · plan: [[2026-10-29-invoice-v1]] prompts: 06, 07 · depends: IG-1 · model: sonnet
 - [ ] IG-4 — Editable sheet · Added · plan: [[2026-10-29-invoice-v1]] prompts: 08, 09, 10 · depends: IG-2, IG-3 · model: opus
 - [ ] IG-5 — PDF download · Added · plan: [[2026-10-29-invoice-v1]] prompts: 11, 12 · depends: IG-4 · model: sonnet
