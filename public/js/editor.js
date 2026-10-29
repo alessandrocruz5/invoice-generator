@@ -3,7 +3,7 @@
 // Region builders take ctx = { doc, view, invalid }.
 import { MODES, VAT_TREATMENTS, totalsRows } from './modes.js';
 import { currencyList, NUMBER_FORMATS, roundingNote, toDisplayNumber, isoSuffix } from './currency.js';
-import { DEFAULT_LABELS, MAX_CUSTOM_FIELDS } from './state.js';
+import { DEFAULT_LABELS, MAX_CUSTOM_FIELDS, ITEM_UNITS } from './state.js';
 import { LIMITS, isZero } from './calc.js';
 import { WITHHOLDING_PRESETS, CUSTOM_PRESET, helperText } from './withholding.js';
 import { PH_FOOTER_NOT_BIR, PH_FOOTER_NO_INPUT_TAX, FORM_2307_NOTE, QR_LABEL } from './copy.js';
@@ -287,6 +287,7 @@ function itemRow(ctx, i, amountText) {
       maxlength: 1000,
     }),
     field(ctx, `items.${i}.quantity`, 'qty', { class: 'field num item-qty', 'aria-label': `Item ${i + 1} quantity` }),
+    selectField(ctx, `items.${i}.unit`, ITEM_UNITS, { class: 'field item-unit', 'aria-label': `Item ${i + 1} unit` }),
     field(ctx, `items.${i}.unit_cost`, 'rate', { class: 'field num item-rate', 'aria-label': `Item ${i + 1} rate` }),
     h('span', { class: 'item-amount', 'data-computed': `amount-${i}`, text: amountText }),
     actionButton('remove-item', '×', {
@@ -305,6 +306,7 @@ function itemsSection(ctx, computed) {
     h('div', { class: 'items-head' }, [
       columnLabel('item_header', 'col-item'),
       columnLabel('quantity_header', 'col-qty num'),
+      columnLabel('unit_header', 'col-unit'),
       columnLabel('unit_cost_header', 'col-rate num'),
       columnLabel('amount_header', 'col-amount num'),
     ]),

@@ -1,5 +1,9 @@
 # Changelog — Invoice Generator
 
+## [0.2.0] — 2026-10-29   (Sprint 2: Item units)
+### Added
+- Item units: choose Qty or Hours per line item, with an Item · Qty / Hrs · Unit · Rate · Amount table on the sheet and in the PDF (IG-9)
+
 ## [0.1.0] — 2026-10-29   (Sprint 1: Invoice Generator v1)
 ### Added
 - Scaffold, guardrails and vendored pdfmake 0.3.11 (IG-1)

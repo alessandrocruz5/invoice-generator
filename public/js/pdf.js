@@ -3,7 +3,7 @@
 import { makeMoneyFormatter, isoSuffix } from './currency.js';
 import { sanitizeForPdf, symbolOrCode } from './pdf-glyphs.js';
 import { modeConfig, totalsRows } from './modes.js';
-import { labelFor, isBlankItem } from './state.js';
+import { labelFor, isBlankItem, ITEM_UNITS } from './state.js';
 import { PH_FOOTER_NOT_BIR, PH_FOOTER_NO_INPUT_TAX, FORM_2307_NOTE, QR_LABEL } from './copy.js';
 
 const MARGIN = 40;
@@ -68,12 +68,17 @@ function metaRows(doc, config, label, date) {
     .map(([name, value]) => [{ text: t(name), bold: true }, { text: t(value), alignment: 'right' }]);
 }
 
+function unitLabel(id) {
+  return ITEM_UNITS.find((u) => u.id === id)?.label ?? 'Qty';
+}
+
 function itemsTable(doc, totals, label, money) {
   const right = { alignment: 'right' };
   const body = [
     [
       { text: t(label('item_header')), bold: true },
       { text: t(label('quantity_header')), bold: true, ...right },
+      { text: t(label('unit_header')), bold: true },
       { text: t(label('unit_cost_header')), bold: true, ...right },
       { text: t(label('amount_header')), bold: true, ...right },
     ],
@@ -85,12 +90,13 @@ function itemsTable(doc, totals, label, money) {
     body.push([
       filled(item.description) ? { stack: [name, { text: t(item.description), fontSize: 9, color: '#444444' }] } : name,
       { text: t(item.quantity), ...right },
+      { text: t(unitLabel(item.unit)) },
       { text: money(item.unit_cost, { maxFractionDigits: Math.min(MAX_RATE_DECIMALS, typedDecimals(item.unit_cost)) }), ...right },
       { text: money(totals.amounts[i]), ...right },
     ]);
   });
   return {
-    table: { headerRows: 1, dontBreakRows: true, widths: ['*', 60, 90, 90], body },
+    table: { headerRows: 1, dontBreakRows: true, widths: ['*', 50, 50, 85, 90], body },
     layout: 'lightHorizontalLines',
     margin: [0, 16, 0, 12],
   };
