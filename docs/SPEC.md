@@ -608,3 +608,22 @@ Open question: the Philippine row should be checked against the text of RR 7-202
 - [Vercel: vercel.json reference](https://vercel.com/docs/project-configuration/vercel-json)
 - [Vercel KB: preview deployments and indexing](https://vercel.com/kb/guide/are-vercel-preview-deployment-indexed-by-search-engines)
 - [caniuse: Intl.supportedValuesOf('currency')](https://caniuse.com/mdn-javascript_builtins_intl_supportedvaluesof_key_parameter_currency)
+
+## 11. Implementation decisions (2026-10-29)
+
+These refine the sections above. Where they differ, this section wins.
+
+- **Base branch.** Work merges into `develop` (Vercel preview). Production is one `develop` → `main` merge after the section 10 checklist passes.
+- **Banned wording.** "BIR-compliant", "BIR-ready", "official receipt" and "official invoice" may appear only inside the approved disclaimer sentences exported from `public/js/copy.js`. `tests/wording.test.js` removes those sentences, then scans `public/` (except `vendor/`) for the phrases.
+- **Donation.** A `support.html` page shows the owner's GCash/Maya QR image (`public/img/donate-qr.png`), linked from the footer.
+- **Document shape additions.** `withholding_preset` (preset id or `"custom"`, default `""`); label key `ship_to_title` ("Ship To"). `fields.discounts` and `fields.tax` are `false` (off), `"%"` (percent) or `true` (flat), as in invoice-generator.com's API.
+- **Numbers.** State holds canonical `.`-decimal strings only. Text that fails to parse stays in the editor's memory with its error, is never saved, and counts as 0 until fixed.
+- **Flat amounts** (flat discount, flat tax, shipping, amount paid) accept up to 4 decimals and round half up to the currency's places, so changing currency never makes them invalid. Discount % accepts up to 3 decimals.
+- **Negative intermediates** (reachable only with input that validation blocks) round half away from zero.
+- **Paper default** follows the browser language when a document is created: Letter for en-US, en-CA, en-PH and es-MX, otherwise A4.
+- **PDF filename** uses the title in title case: `Billing Statement BS-0007.pdf`.
+- **History CSV** is UTF-8 with a BOM and CRLF line endings; text cells starting with `=`, `+`, `-`, `@`, a tab or a carriage return are prefixed with `'`.
+- **Extra test files.** `tests/withholding.test.js`, `tests/state.test.js` and `tests/pdf-glyphs.test.js` exist beside the section 9 list.
+- **Browser floor.** Chrome/Edge 99+, **Firefox 98+** (native `<dialog>`, which section 6 requires; this also covers `structuredClone` and `crypto.randomUUID`), Safari 15.4+.
+- **Not-saving banner.** It appears only when storage actually fails. Current browsers give private windows working (temporary) storage, so the section 10 check is done with site data blocked for the origin.
+- **Previews.** The Vercel project's production branch is `main`. Preview checks need Deployment Protection turned off for previews, or a Protection Bypass for Automation secret sent as the `x-vercel-protection-bypass` header.

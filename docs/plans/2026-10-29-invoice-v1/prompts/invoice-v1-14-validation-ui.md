@@ -2,8 +2,8 @@
 type: prompt
 plan: "[[2026-10-29-invoice-v1]]"
 id: 14
-unit: U6
-status: todo
+unit: IG-6
+status: done
 model: sonnet
 effort: medium
 depends_on: [13]
