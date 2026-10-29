@@ -1,7 +1,7 @@
 ---
 type: plan
 kind: feature
-status: in-progress
+status: done
 repo: invoice-generator
 delivery: pr
 base: develop
@@ -140,3 +140,8 @@ Revert the IG-9 merge commit on `develop`. Documents saved in the meantime keep 
 - 2026-10-29: audited (PASS-WITH-CHANGES), 4 fixes and 3 notes applied
 - 2026-10-29: build started on IG-9; rollback point 637bd8f3c5200c7ec5a436731fff9e2dd318fa00
 - 2026-10-29: 01 done (opus, 0 retries): item `unit` in state/migrate/import, `ITEM_UNITS`, `unit_header`, `quantity_header` → "Qty / Hrs", SPEC §3/§8/§11; 164 tests pass in 3 TZs
+- 2026-10-29: 02 done (sonnet, 0 retries): unit select + column on sheet and PDF, stacked items layout moved to ≤1099px, pdf tests; 166 tests pass in 3 TZs. Browser width checks not run.
+- 2026-10-29: IG-9 merged (PR #10); plan done
+
+## Outcome
+Shipped per plan in one unit (2 prompts). Deviations: none. Gotchas: PDF Qty column is 50pt (tight for long quantities); browser width checks were not run during the build; users who never renamed the quantity header now see 'Qty / Hrs'.

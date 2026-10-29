@@ -19,12 +19,12 @@ Epic: — (no epic ticket) · Branch base: `develop` · Plan: [[2026-10-29-invoi
 - [x] IG-7 — Saving, history, import and export · Added · plan: [[2026-10-29-invoice-v1]] prompts: 15, 16, 17 · depends: IG-6 · model: opus (merged 2026-10-29) — storage.js, autosave, History, import/export; 163 tests.
 - [x] IG-8 — Public pages and launch readiness · Added · plan: [[2026-10-29-invoice-v1]] prompts: 18, 19 · depends: IG-7 · model: sonnet (merged 2026-10-29) — privacy (EN + fil), terms and support pages, footer and disclaimer, meta/OG tags, favicon, a11y pass; 163 tests. Downstream: support.html shows `gcash-qr.jpg` and `maya-qr.jpg` (not `donate-qr.png`); Lighthouse, Safari/Firefox and the security headers are still unchecked (SPEC §10 on the preview).
 
-## Sprint 2 — Item units: Qty or Hours   (planned 2026-10-29)
+## Sprint 2 — Item units: Qty or Hours · v0.2.0   (planned 2026-10-29, shipped 2026-10-29)
 Epic: — (no epic key given) · Branch base: `develop` · Plan: [[2026-10-29-item-units]]
 
 > **Epic:** Let each line item be billed by quantity or by hours, chosen per item, with the items table matching the
 > sample: Item · Qty / Hrs · Unit · Rate · Amount. The calculation is unchanged (amount = quantity × rate).
 
-- [~] IG-9 — Item units: Qty or Hours · Added · plan: [[2026-10-29-item-units]] prompts: 01, 02 · depends: — · model: opus
+- [x] IG-9 — Item units: Qty or Hours · Added · plan: [[2026-10-29-item-units]] prompts: 01, 02 · depends: — · model: opus (merged 2026-10-29) — per-item Qty/Hours unit (`ITEM_UNITS`, `item.unit`, label `unit_header`), Unit column on sheet and PDF, items stacked ≤1099px; 166 tests. Downstream: `quantity_header` default is now 'Qty / Hrs'; PDF Qty column is 50pt wide, so check long quantities for wrapping; browser width checks still open.
 
 ## Hotfixes
