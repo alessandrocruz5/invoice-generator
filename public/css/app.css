@@ -309,3 +309,16 @@ dialog h2 { margin: 0 0 6px; font-size: 1.1rem; }
 @media (hover: none) {
   .item-remove { opacity: 1; }
 }
+
+/* ---- static pages (privacy, terms) ---- */
+.page {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 24px var(--gap) 48px;
+}
+.page h1 { font-size: 1.6rem; margin: 1.5rem 0 0.5rem; }
+.page h2 { font-size: 1.15rem; margin: 1.5rem 0 0.25rem; }
+.page p, .page li { margin: 0.5rem 0; }
+.page a { color: var(--accent); overflow-wrap: anywhere; }
+.page .back { display: inline-block; margin-bottom: 8px; }
+.page section + section { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--border); }
