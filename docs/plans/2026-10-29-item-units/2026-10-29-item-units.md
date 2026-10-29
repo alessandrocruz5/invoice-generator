@@ -6,7 +6,7 @@ repo: invoice-generator
 delivery: pr
 base: develop
 sprint: 2
-epic:
+epic: —
 created: 2026-10-29
 risk: medium
 prompts: 2
@@ -104,13 +104,13 @@ Review constraints checked: no `innerHTML` (the select is built with `selectFiel
 ## Units
 | Unit | Title | Category | Prompts | Depends | High-stakes | Acceptance criteria |
 |---|---|---|---|---|---|---|
-| U1 | Item units: Qty or Hours | Added | 01, 02 | — | yes (`storage.js`) | R1: every item row on the sheet has a Qty/Hours select, and new rows default to Qty. R2: an item with qty 160 and rate 500 shows an amount of 80,000.00 whether its unit is Qty or Hours; `calc.js` is unchanged. R3: the sheet and PDF items tables read Item · Qty / Hrs · Unit · Rate · Amount, and an hours row prints "Hours" in the Unit column. R4: a draft, history entry or imported file without `unit` opens as Qty; `'hours'` survives reload, export → import and history reopen; an imported `unit: "days"` becomes Qty. |
+| IG-9 | Item units: Qty or Hours | Added | 01, 02 | — | yes (`storage.js`) | R1: every item row on the sheet has a Qty/Hours select, and new rows default to Qty. R2: an item with qty 160 and rate 500 shows an amount of 80,000.00 whether its unit is Qty or Hours; `calc.js` is unchanged. R3: the sheet and PDF items tables read Item · Qty / Hrs · Unit · Rate · Amount, and an hours row prints "Hours" in the Unit column. R4: a draft, history entry or imported file without `unit` opens as Qty; `'hours'` survives reload, export → import and history reopen; an imported `unit: "days"` becomes Qty. |
 
 ## Prompts
 | # | Title | Unit | Model | Effort | Depends | Group | Files |
 |---|---|---|---|---|---|---|---|
-| 01 | Item unit in the document shape | U1 | opus | high | — | A | `public/js/state.js`, `public/js/storage.js`, `tests/state.test.js`, `tests/storage.test.js`, `docs/SPEC.md` |
-| 02 | Unit column on the sheet and in the PDF | U1 | sonnet | medium | 01 | B | `public/js/editor.js`, `public/js/pdf.js`, `public/css/app.css`, `tests/pdf.test.js` |
+| 01 | Item unit in the document shape | IG-9 | opus | high | — | A | `public/js/state.js`, `public/js/storage.js`, `tests/state.test.js`, `tests/storage.test.js`, `docs/SPEC.md` |
+| 02 | Unit column on the sheet and in the PDF | IG-9 | sonnet | medium | 01 | B | `public/js/editor.js`, `public/js/pdf.js`, `public/css/app.css`, `tests/pdf.test.js` |
 
 - 01 · opus: it edits `public/js/storage.js` (a `## High-stakes paths` glob, the untrusted-input boundary) and the saved-document shape that four modules share.
 
@@ -133,7 +133,7 @@ Browser (Vercel preview or `npx serve public`), proving R1, R3 and R4:
 7. In DevTools, set a stored draft's item `unit` to `"days"`, or delete it, and reload: it shows Qty.
 
 ## Rollback
-Revert the U1 merge commit on `develop`. Documents saved in the meantime keep an extra `unit` key per item. The pre-change `migrate` copies items as-is and `importItems` drops unknown keys, so old code ignores the key and nothing breaks.
+Revert the IG-9 merge commit on `develop`. Documents saved in the meantime keep an extra `unit` key per item. The pre-change `migrate` copies items as-is and `importItems` drops unknown keys, so old code ignores the key and nothing breaks.
 
 ## Log
 - 2026-10-29: planned

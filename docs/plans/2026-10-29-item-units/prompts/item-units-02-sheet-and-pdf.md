@@ -2,7 +2,7 @@
 type: prompt
 plan: "[[2026-10-29-item-units]]"
 id: 02
-unit: U1
+unit: IG-9
 status: todo
 model: sonnet
 effort: medium
