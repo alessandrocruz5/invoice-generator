@@ -1,5 +1,5 @@
 // PDF document definition for pdfmake. Pure: no DOM, no pdfmake import; money comes from `totals`.
-// Prompt 12 adds the lazy loader and download to this file.
+// The lazy pdfmake loader and download() live at the bottom; their DOM access is inside function bodies.
 import { makeMoneyFormatter, isoSuffix } from './currency.js';
 import { sanitizeForPdf, symbolOrCode } from './pdf-glyphs.js';
 import { modeConfig, totalsRows } from './modes.js';
@@ -203,4 +203,38 @@ export function buildDocDefinition(state, totals, formatters) {
       return stack.length ? { stack, margin: [MARGIN, 4, MARGIN, 0] } : { text: '' };
     },
   };
+}
+
+// ---- lazy load and download --------------------------------------------------------------------------
+
+const LOAD_ERROR = 'Could not load the PDF tool. Check your connection and try again.';
+let pdfMakePromise = null;
+
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    const el = document.createElement('script');
+    el.src = src;
+    el.onload = () => resolve();
+    el.onerror = () => reject(new Error(LOAD_ERROR));
+    document.head.appendChild(el);
+  });
+}
+
+// Fetched on the first download only. vfs_fonts.js registers itself with the global pdfMake when it runs.
+export function loadPdfMake() {
+  if (!pdfMakePromise) {
+    pdfMakePromise = loadScript('vendor/pdfmake/pdfmake.min.js')
+      .then(() => loadScript('vendor/pdfmake/vfs_fonts.js'))
+      .then(() => globalThis.pdfMake)
+      .catch(() => {
+        pdfMakePromise = null;
+        throw new Error(LOAD_ERROR);
+      });
+  }
+  return pdfMakePromise;
+}
+
+export async function downloadPdf(def, filename) {
+  const pdfMake = await loadPdfMake();
+  await pdfMake.createPdf(def).download(filename);
 }

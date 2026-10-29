@@ -20,7 +20,8 @@ import {
   parseUserNumber,
 } from './currency.js';
 import { formatTin } from './tin.js';
-import { todayIso, addDays, parseNetTerms } from './dates.js';
+import { todayIso, addDays, parseNetTerms, formatDate } from './dates.js';
+import { pdfMoneyFormatter, pdfFilename, buildDocDefinition, downloadPdf } from './pdf.js';
 import { renderSheet, updateComputed, renderSidebar, setPath, autoGrow, idFor } from './editor.js';
 
 const app = { doc: null, invalid: new Map() /* path -> { raw, error } */, view: null };
@@ -333,6 +334,47 @@ function onSetting(e) {
   refresh({ structural: true });
 }
 
+// Natural pixel size of a stored data URL, or null when absent or undecodable (pdf.js then uses `fit`).
+async function imageSize(dataUrl) {
+  if (!dataUrl) return null;
+  try {
+    const img = new Image();
+    img.src = dataUrl;
+    await img.decode();
+    return { width: img.naturalWidth, height: img.naturalHeight };
+  } catch {
+    return null;
+  }
+}
+
+async function onDownload() {
+  const button = document.getElementById('download');
+  const messages = document.getElementById('messages');
+  // validation gate (prompt 14)
+  button.disabled = true;
+  button.setAttribute('aria-busy', 'true');
+  messages.textContent = '';
+  try {
+    const doc = app.doc;
+    const view = app.view;
+    const images = { logo: await imageSize(doc.logo), qr: await imageSize(doc.payment_qr) };
+    const formatters = {
+      money: pdfMoneyFormatter({ locale: view.locale, currency: doc.currency, currencyDisplay: doc.settings.currencyDisplay }),
+      date: (iso) => formatDate(iso, view.locale),
+      label: view.label,
+      images,
+    };
+    const def = buildDocDefinition(doc, view.totals, formatters);
+    await downloadPdf(def, pdfFilename(view.label('header'), doc.number));
+    // after download (prompt 17)
+  } catch (err) {
+    messages.textContent = err instanceof Error && err.message ? err.message : 'Could not create the PDF. Try again.';
+  } finally {
+    button.disabled = false;
+    button.removeAttribute('aria-busy');
+  }
+}
+
 function boot() {
   form = document.getElementById('sheet');
   sidebar = document.getElementById('sidebar');
@@ -345,6 +387,7 @@ function boot() {
   form.addEventListener('change', onUpload);
   form.addEventListener('click', onAction);
   sidebar.addEventListener('change', onSetting);
+  document.getElementById('download').addEventListener('click', onDownload);
   window.addEventListener('resize', () => {
     for (const el of form.querySelectorAll('textarea')) autoGrow(el);
   });
