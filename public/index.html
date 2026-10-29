@@ -5,11 +5,59 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Free Billing Statement Generator for Filipino Freelancers</title>
   <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/main.js"></script>
 </head>
 <body>
-  <main>
+  <header class="topbar">
     <h1>Billing Statement Generator</h1>
-    <p>Coming soon.</p>
+    <nav id="topbar-actions" aria-label="Document actions"></nav>
+  </header>
+
+  <main class="layout">
+    <form id="sheet" class="sheet" aria-label="Invoice" novalidate></form>
+
+    <aside id="sidebar" class="sidebar" aria-label="Settings">
+      <div class="download-bar">
+        <button type="button" id="download" class="primary">Download PDF</button>
+      </div>
+
+      <div id="messages"></div>
+
+      <div class="settings">
+        <div class="setting">
+          <label for="set-mode">Mode</label>
+          <select id="set-mode" data-setting="mode"></select>
+        </div>
+        <div class="setting">
+          <label for="set-currency">Currency</label>
+          <select id="set-currency" data-setting="currency" aria-describedby="currency-help"></select>
+        </div>
+        <div class="setting">
+          <label for="set-locale">Format</label>
+          <select id="set-locale" data-setting="locale"></select>
+        </div>
+        <div class="setting">
+          <label for="set-paper">Paper</label>
+          <select id="set-paper" data-setting="paper">
+            <option value="A4">A4</option>
+            <option value="LETTER">Letter</option>
+          </select>
+        </div>
+        <p id="currency-help" class="help">Changing currency doesn't convert amounts.</p>
+        <fieldset class="setting display-style">
+          <legend>Show currency as</legend>
+          <label><input type="radio" name="currencyDisplay" value="symbol" data-setting="currencyDisplay"> Symbol</label>
+          <label><input type="radio" name="currencyDisplay" value="code" data-setting="currencyDisplay"> Code</label>
+        </fieldset>
+        <p id="currency-note" class="help" hidden></p>
+      </div>
+
+      <div id="sidebar-actions"></div>
+
+      <p id="data-note" class="help">Your data lives only in this browser.</p>
+    </aside>
   </main>
+
+  <footer id="app-footer"></footer>
 </body>
 </html>
