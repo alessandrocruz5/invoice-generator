@@ -25,7 +25,18 @@ import { formatTin } from './tin.js';
 import { todayIso, addDays, parseNetTerms, formatDate } from './dates.js';
 import { pdfMoneyFormatter, pdfFilename, buildDocDefinition, downloadPdf } from './pdf.js';
 import { validate } from './validate.js';
-import { getLocalStorage, createStore } from './storage.js';
+import {
+  getLocalStorage,
+  createStore,
+  toHistoryEntry,
+  upsertHistory,
+  historyToCsv,
+  exportFilename,
+  csvFilename,
+  sanitizeImport,
+  IMPORT_MAX_BYTES,
+} from './storage.js';
+import { nextNumber } from './numbering.js';
 import { STORAGE_BANNER, DATA_LOCATION_NOTE } from './copy.js';
 import { renderSheet, updateComputed, renderSidebar, setPath, autoGrow, idFor } from './editor.js';
 
@@ -33,7 +44,8 @@ const app = {
   doc: null,
   invalid: new Map() /* path -> { raw, error } */,
   view: null,
-  // Validation state. Prompt 17 fills historyNumbers; validate runs on every keystroke, so storage is never read there.
+  // Validation state. historyNumbers mirrors the saved History and is reset after every history write;
+  // validate runs on every keystroke, so storage is never read there.
   historyNumbers: [],
   issues: { errors: [], warnings: [] },
   touched: new Set(),
@@ -552,14 +564,213 @@ async function onDownload() {
       images,
     };
     const def = buildDocDefinition(doc, view.totals, formatters);
+    // Snapshot now, so edits made while the PDF is built don't leak into the History entry.
+    const entry = toHistoryEntry(doc, view.totals, new Date().toISOString());
     await downloadPdf(def, pdfFilename(view.label('header'), doc.number));
-    // after download (prompt 17)
+    recordDownload(entry);
+    refresh();
   } catch (err) {
     messages.textContent = err instanceof Error && err.message ? err.message : 'Could not create the PDF. Try again.';
   } finally {
     button.disabled = false;
     button.removeAttribute('aria-busy');
   }
+}
+
+// ---- history, export, import -------------------------------------------------------------------------
+
+const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
+
+// A navigation to a blob URL, not a fetch, so the CSP's connect-src 'none' allows it.
+function saveFile(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function readHistoryList() {
+  return app.store.readHistory().value.filter(isObject);
+}
+
+const historyNumbersOf = (list) => list.map((e) => String(e.number ?? '').trim());
+
+// The only way History is written, so the numbers validate reads can't drift from what is saved.
+function writeHistoryList(list) {
+  if (!app.store.writeHistory(list).ok) {
+    showStorageBanner();
+    return false;
+  }
+  app.historyNumbers = historyNumbersOf(list);
+  return true;
+}
+
+function recordDownload(entry) {
+  writeHistoryList(upsertHistory(readHistoryList(), entry));
+  if (!app.store.writeLastNumber(String(entry.number ?? '').trim()).ok) showStorageBanner();
+}
+
+function loadDocument(doc) {
+  app.doc = doc;
+  resetDocState();
+  setDefaultStatus('');
+  document.getElementById('download-error').textContent = '';
+  refresh({ structural: true });
+}
+
+function onExport() {
+  saveFile(new Blob([JSON.stringify(app.doc, null, 2)], { type: 'application/json' }), exportFilename(app.doc));
+}
+
+async function onImportFile(e) {
+  const input = e.target;
+  const file = input.files?.[0];
+  // Reset first so the same file can be picked again.
+  input.value = '';
+  const messages = document.getElementById('download-error');
+  messages.textContent = '';
+  if (!file) return;
+  if (file.size > IMPORT_MAX_BYTES) {
+    messages.textContent = 'This file is too large (1 MB max).';
+    return;
+  }
+  let doc;
+  try {
+    doc = sanitizeImport(await file.text());
+  } catch (err) {
+    messages.textContent = err instanceof Error && err.message ? err.message : "This file isn't a valid document.";
+    return;
+  }
+  if (!confirm('Replace the current document with the imported one?')) return;
+  loadDocument(doc);
+}
+
+// History entries carry no images, so an opened one takes the current defaults' logo and QR.
+function documentFromEntry(entry) {
+  const doc = migrate(entry);
+  const defaults = app.store.readDefaults().value;
+  for (const key of ['logo', 'payment_qr']) {
+    const image = isObject(defaults) ? defaults[key] : null;
+    doc[key] = checkImageDataUrl(image) ? image : null;
+  }
+  return doc;
+}
+
+function historyBalance(entry) {
+  const balance = isObject(entry.totals) && typeof entry.totals.balance === 'string' ? entry.totals.balance : '';
+  if (balance === '') return '';
+  try {
+    const display = isObject(entry.settings) && entry.settings.currencyDisplay === 'code' ? 'code' : 'symbol';
+    return makeMoneyFormatter({ locale: app.view.locale, currency: entry.currency, currencyDisplay: display })(balance);
+  } catch {
+    return balance;
+  }
+}
+
+function historyCell(text) {
+  const td = document.createElement('td');
+  td.textContent = text;
+  return td;
+}
+
+function historyButton(label, op, index, number) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  button.dataset.history = op;
+  button.dataset.index = String(index);
+  button.setAttribute('aria-label', `${label} ${number}`);
+  return button;
+}
+
+function firstLine(text) {
+  return typeof text === 'string' ? text.split(/\r\n|\r|\n/).map((l) => l.trim()).find((l) => l !== '') ?? '' : '';
+}
+
+function renderHistory() {
+  const list = readHistoryList();
+  const rows = document.getElementById('history-rows');
+  rows.textContent = '';
+  list.forEach((entry, i) => {
+    const number = typeof entry.number === 'string' ? entry.number : '';
+    const tr = document.createElement('tr');
+    const ops = document.createElement('td');
+    const group = document.createElement('div');
+    group.className = 'history-ops';
+    group.append(historyButton('Open', 'open', i, number), historyButton('Duplicate', 'duplicate', i, number), historyButton('Delete', 'delete', i, number));
+    ops.append(group);
+    tr.append(
+      historyCell(number),
+      historyCell(typeof entry.bir_invoice_no === 'string' ? entry.bir_invoice_no : ''),
+      historyCell(firstLine(entry.to)),
+      historyCell(typeof entry.date === 'string' ? formatDate(entry.date, app.view.locale) : ''),
+      historyCell(historyBalance(entry)),
+      ops,
+    );
+    rows.append(tr);
+  });
+  document.getElementById('history-empty').hidden = list.length > 0;
+  document.getElementById('history-list').hidden = list.length === 0;
+  document.getElementById('history-csv').disabled = list.length === 0;
+  document.getElementById('history-clear').disabled = list.length === 0;
+}
+
+function openHistory() {
+  document.getElementById('history-status').textContent = '';
+  renderHistory();
+  document.getElementById('history-dialog').showModal();
+}
+
+function openFromHistory(entry, duplicate) {
+  if (!confirm('Replace the current document with this one?')) return;
+  const status = document.getElementById('history-status');
+  let doc;
+  try {
+    doc = documentFromEntry(entry);
+  } catch {
+    status.textContent = "This entry can't be opened.";
+    return;
+  }
+  if (duplicate) {
+    doc.number = nextNumber(app.store.readLastNumber().value) || doc.number;
+    doc.date = todayIso();
+  }
+  loadDocument(doc);
+  document.getElementById('history-dialog').close();
+}
+
+function onHistoryClick(e) {
+  const button = e.target.closest('button[data-history]');
+  if (!button) return;
+  const list = readHistoryList();
+  const index = Number.parseInt(button.dataset.index, 10);
+  if (!(index >= 0 && index < list.length)) return;
+  const op = button.dataset.history;
+  if (op === 'delete') {
+    list.splice(index, 1);
+    writeHistoryList(list);
+    renderHistory();
+    // The pressed button is gone: move focus to the next row's Open button, or Close when the list is empty.
+    const next = document.querySelector(`#history-rows button[data-history="open"][data-index="${Math.min(index, list.length - 1)}"]`);
+    (next ?? document.getElementById('history-close')).focus();
+  } else if (op === 'open' || op === 'duplicate') {
+    openFromHistory(list[index], op === 'duplicate');
+  }
+}
+
+function onClearHistory() {
+  if (!confirm("Delete every History entry in this browser? This can't be undone.")) return;
+  writeHistoryList([]);
+  renderHistory();
+  document.getElementById('history-close').focus();
+}
+
+function onHistoryCsv() {
+  saveFile(new Blob([historyToCsv(readHistoryList())], { type: 'text/csv;charset=utf-8' }), csvFilename(todayIso()));
 }
 
 // ---- saving, new document, clear ---------------------------------------------------------------------
@@ -609,8 +820,16 @@ function buildPersistenceControls() {
   status.id = 'default-status';
   status.className = 'help';
   status.setAttribute('role', 'status');
-  document.getElementById('sidebar-actions').append(actionButton('Save as default', 'save-default', onSaveDefault), status);
-  document.getElementById('topbar-actions').append(actionButton('New document', 'new-document', onNewDocument));
+  document.getElementById('sidebar-actions').append(
+    actionButton('Save as default', 'save-default', onSaveDefault),
+    actionButton('Export', 'export', onExport),
+    actionButton('Import', 'import', () => document.getElementById('import-file').click()),
+    status,
+  );
+  document.getElementById('topbar-actions').append(
+    actionButton('History', 'history-open', openHistory),
+    actionButton('New document', 'new-document', onNewDocument),
+  );
   const clear = actionButton('Clear all data', 'clear-all', onClearAll);
   // app.css is outside this prompt's files, so the link look is set here.
   Object.assign(clear.style, { background: 'none', border: '0', padding: '0', color: 'inherit', textDecoration: 'underline', cursor: 'pointer' });
@@ -622,7 +841,15 @@ function boot() {
   form = document.getElementById('sheet');
   sidebar = document.getElementById('sidebar');
   app.doc = loadInitialDoc();
+  app.historyNumbers = historyNumbersOf(readHistoryList());
   buildPersistenceControls();
+  document.getElementById('import-file').addEventListener('change', onImportFile);
+  const historyDialog = document.getElementById('history-dialog');
+  historyDialog.addEventListener('click', onHistoryClick);
+  historyDialog.addEventListener('close', () => document.getElementById('history-open').focus());
+  document.getElementById('history-csv').addEventListener('click', onHistoryCsv);
+  document.getElementById('history-clear').addEventListener('click', onClearHistory);
+  document.getElementById('history-close').addEventListener('click', () => historyDialog.close());
 
   // The CSP has form-action 'none': an implicit Enter-key submit would attempt a blocked navigation.
   form.addEventListener('submit', (e) => e.preventDefault());
