@@ -4,23 +4,34 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Free Billing Statement Generator for Filipino Freelancers</title>
+  <meta name="description" content="Free billing statement generator for Filipino freelancers: get withholding tax right, or switch to Generic mode for invoices to clients abroad.">
+  <meta name="theme-color" content="#1d4ed8">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Free Billing Statement Generator for Filipino Freelancers">
+  <meta property="og:description" content="Free billing statement generator for Filipino freelancers: get withholding tax right, or switch to Generic mode for invoices to clients abroad.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/app.css">
   <script type="module" src="js/main.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#sheet">Skip to the document</a>
   <div id="storage-banner" class="messages-warnings" role="status" hidden></div>
   <header class="topbar">
-    <h1>Billing Statement Generator</h1>
+    <div class="brand">
+      <h1>Billing Statement Generator</h1>
+      <p class="tagline">Billing statements for Filipino freelancers, with withholding tax done right. Works alongside your BIR invoice.</p>
+    </div>
     <nav id="topbar-actions" aria-label="Document actions"></nav>
   </header>
 
   <main class="layout">
-    <form id="sheet" class="sheet" aria-label="Invoice" novalidate></form>
+    <form id="sheet" class="sheet" aria-label="Invoice" tabindex="-1" novalidate></form>
 
     <aside id="sidebar" class="sidebar" aria-label="Settings">
       <div class="download-bar">
         <button type="button" id="download" class="primary">Download PDF</button>
       </div>
+      <p class="disclaimer">Billing statements made here are payment requests, not BIR-registered invoices or official receipts. If you're BIR-registered, also issue your BIR invoice and enter its number in BIR Invoice No. This tool doesn't give tax advice. Outside the Philippines, check what your invoices must include; where e-invoicing is mandatory, a PDF may not count as a valid business invoice.</p>
 
       <div id="messages">
         <div id="validation"></div>
@@ -62,7 +73,16 @@
     </aside>
   </main>
 
-  <footer id="app-footer"></footer>
+  <footer id="app-footer">
+    <p>Not tax advice &middot; Stays in your browser</p>
+    <nav class="footer-links" aria-label="Site">
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms</a>
+      <a href="support.html">Support this tool</a>
+    </nav>
+    <p>Everything you type stays in this browser. Nothing is sent to a server.</p>
+    <p class="disclaimer">Billing statements made here are payment requests, not BIR-registered invoices or official receipts. If you're BIR-registered, also issue your BIR invoice and enter its number in BIR Invoice No. This tool doesn't give tax advice. Outside the Philippines, check what your invoices must include; where e-invoicing is mandatory, a PDF may not count as a valid business invoice.</p>
+  </footer>
 
   <input type="file" id="import-file" class="visually-hidden" accept=".json,application/json" tabindex="-1" aria-hidden="true">
 
