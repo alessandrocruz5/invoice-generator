@@ -13,6 +13,8 @@
   --sheet-muted: #5f5f5f; /* 6.4:1 on white */
   --sheet-hover: #c7c7c7;
   --gap: 16px;
+  --error: #b91c1c; /* 6.5:1 on white and on --panel */
+  --warn: #7a4f00; /* 7.3:1 on white */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,6 +27,8 @@
     --accent: #7aa2ff;
     --accent-text: #0b1020;
     --focus: #9ab8ff;
+    --error: #ff9d9d;
+    --warn: #f5c451;
   }
 }
 
@@ -224,6 +228,20 @@ button.primary {
 .notes-section, .payment-section { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .sheet-footer { display: flex; flex-direction: column; gap: 6px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
 .sheet-footer:empty { display: none; }
+
+/* ---- validation ---- */
+#messages { display: flex; flex-direction: column; gap: 10px; }
+#validation:empty, #download-error:empty { display: none; }
+#validation { display: flex; flex-direction: column; gap: 10px; }
+#download-error { margin: 0; color: var(--error); font-weight: 600; }
+.messages-errors, .messages-warnings { padding: 8px 10px; border-left: 4px solid; border-radius: 4px; background: var(--panel); font-size: 0.9rem; }
+.messages-errors { border-color: var(--error); color: var(--error); }
+.messages-warnings { border-color: var(--warn); color: var(--warn); }
+.messages-heading { margin: 0 0 4px; font-weight: 700; }
+.messages-errors ul, .messages-warnings ul { margin: 0; padding-left: 1.1rem; }
+.messages-errors a { color: inherit; }
+.messages-errors:focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sheet .field[aria-invalid="true"] { border-color: #b91c1c; box-shadow: 0 0 0 2px #b91c1c; border-radius: 3px; }
 
 /* ---- footer ---- */
 #app-footer { padding: 16px var(--gap) 24px; color: var(--muted); font-size: 0.85rem; text-align: center; }

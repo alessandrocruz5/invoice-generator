@@ -22,9 +22,19 @@ import {
 import { formatTin } from './tin.js';
 import { todayIso, addDays, parseNetTerms, formatDate } from './dates.js';
 import { pdfMoneyFormatter, pdfFilename, buildDocDefinition, downloadPdf } from './pdf.js';
+import { validate } from './validate.js';
 import { renderSheet, updateComputed, renderSidebar, setPath, autoGrow, idFor } from './editor.js';
 
-const app = { doc: null, invalid: new Map() /* path -> { raw, error } */, view: null };
+const app = {
+  doc: null,
+  invalid: new Map() /* path -> { raw, error } */,
+  view: null,
+  // Validation state. Prompt 17 fills historyNumbers; validate runs on every keystroke, so storage is never read there.
+  historyNumbers: [],
+  issues: { errors: [], warnings: [] },
+  touched: new Set(),
+  showAll: false,
+};
 
 const MAX_DECIMALS = { qty: 4, rate: 4, percent: 3, money: 4 };
 const IMAGE_TARGETS = new Set(['logo', 'payment_qr']);
@@ -112,6 +122,105 @@ function refresh({ structural = false, focusId = null } = {}) {
     updateComputed(form, app.doc, app.view);
   }
   renderSidebar(sidebar, app.doc, app.view);
+  app.issues = validate(app.doc, { totals: app.view.totals, invalid: app.invalid, historyNumbers: app.historyNumbers });
+  renderMessages();
+}
+
+// ---- validation messages -----------------------------------------------------------------------------
+
+let renderedKey = '';
+
+// Errors show once their field was left, or for every field after a Download attempt.
+function visibleErrors() {
+  return app.issues.errors.filter((e) => app.showAll || (e.field !== null && app.touched.has(e.field)));
+}
+
+function messageList(issues, firstId) {
+  const items = issues.map((issue, i) => {
+    const li = document.createElement('li');
+    li.id = `msg-${firstId + i}`;
+    const control = issue.field !== null ? document.getElementById(idFor(issue.field)) : null;
+    if (control) {
+      const link = document.createElement('a');
+      link.href = `#${control.id}`;
+      link.textContent = issue.message;
+      li.append(link);
+    } else {
+      li.textContent = issue.message;
+    }
+    return li;
+  });
+  const ul = document.createElement('ul');
+  ul.append(...items);
+  return ul;
+}
+
+function messageBlock(heading, issues, firstId, attrs) {
+  const box = document.createElement('div');
+  for (const [name, value] of Object.entries(attrs)) box.setAttribute(name, value);
+  const title = document.createElement('p');
+  title.className = 'messages-heading';
+  title.textContent = heading;
+  box.append(title, messageList(issues, firstId));
+  return box;
+}
+
+// Marks each errored control, keeping the describedby ids the sheet itself set (such as the withholding help).
+function markInvalidControls(errors) {
+  const byField = new Map();
+  errors.forEach((e, i) => {
+    if (e.field === null) return;
+    byField.set(e.field, [...(byField.get(e.field) ?? []), `msg-${i}`]);
+  });
+  const own = (el) => (el.getAttribute('aria-describedby') ?? '').split(/\s+/).filter((id) => id && !id.startsWith('msg-'));
+  for (const el of form.querySelectorAll('[aria-invalid]')) {
+    if (byField.has(el.dataset.path)) continue;
+    el.removeAttribute('aria-invalid');
+    const rest = own(el);
+    if (rest.length) el.setAttribute('aria-describedby', rest.join(' '));
+    else el.removeAttribute('aria-describedby');
+  }
+  for (const [field, ids] of byField) {
+    const el = document.getElementById(idFor(field));
+    if (!el) continue;
+    el.setAttribute('aria-invalid', 'true');
+    el.setAttribute('aria-describedby', [...own(el), ...ids].join(' '));
+  }
+}
+
+function renderMessages() {
+  const errors = visibleErrors();
+  const warnings = app.issues.warnings;
+  const key = JSON.stringify([errors, warnings]);
+  if (key !== renderedKey) {
+    renderedKey = key;
+    const box = document.getElementById('validation');
+    box.textContent = '';
+    if (errors.length) {
+      box.append(messageBlock('Fix these before downloading:', errors, 0, { id: 'error-summary', class: 'messages-errors', role: 'alert', tabindex: '-1' }));
+    }
+    if (warnings.length) {
+      box.append(messageBlock('Check these:', warnings, errors.length, { class: 'messages-warnings' }));
+    }
+  }
+  markInvalidControls(errors);
+}
+
+function onFocusOut(e) {
+  const path = e.target instanceof HTMLElement ? e.target.dataset.path : undefined;
+  if (!path || rendering || app.touched.has(path)) return;
+  app.touched.add(path);
+  renderMessages();
+}
+
+function onMessageLink(e) {
+  const link = e.target.closest('a[href^="#f-"]');
+  if (!link) return;
+  e.preventDefault();
+  const el = document.getElementById(link.getAttribute('href').slice(1));
+  if (!el) return;
+  el.focus();
+  el.scrollIntoView({ block: 'center' });
 }
 
 // ---- edits -------------------------------------------------------------------------------------------
@@ -349,8 +458,16 @@ async function imageSize(dataUrl) {
 
 async function onDownload() {
   const button = document.getElementById('download');
-  const messages = document.getElementById('messages');
+  const messages = document.getElementById('download-error');
   // validation gate (prompt 14)
+  app.showAll = true;
+  app.issues = validate(app.doc, { totals: app.view.totals, invalid: app.invalid, historyNumbers: app.historyNumbers });
+  renderMessages();
+  if (app.issues.errors.length) {
+    messages.textContent = '';
+    document.getElementById('error-summary')?.focus();
+    return;
+  }
   button.disabled = true;
   button.setAttribute('aria-busy', 'true');
   messages.textContent = '';
@@ -386,6 +503,8 @@ function boot() {
   form.addEventListener('change', onEdit);
   form.addEventListener('change', onUpload);
   form.addEventListener('click', onAction);
+  form.addEventListener('focusout', onFocusOut);
+  document.getElementById('messages').addEventListener('click', onMessageLink);
   sidebar.addEventListener('change', onSetting);
   document.getElementById('download').addEventListener('click', onDownload);
   window.addEventListener('resize', () => {
