@@ -1,6 +1,8 @@
 # invoice-generator
 Public Invoice Generator for part-time, individual contractors, or freelance people.
 
+https://invoice-generator-mocha-mu.vercel.app/
+
 ## Development
 
 No build step and no dependencies. Serve `public/` locally with `python3 -m http.server 8080 -d public`, and run tests with `npm test`. The spec is `docs/SPEC.md`.
